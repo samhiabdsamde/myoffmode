@@ -1,67 +1,104 @@
 'use client'
+import { useState, Suspense } from 'react'
 import { createClient } from '@/lib/supabase'
+import { useRouter, useSearchParams } from 'next/navigation'
+import Link from 'next/link'
 
-export default function LoginPage() {
+function LoginForm() {
   const supabase = createClient()
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const redirect = searchParams.get('redirect') || '/dashboard'
+  const urlError = searchParams.get('error')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [isSignUp, setIsSignUp] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [message, setMessage] = useState('')
 
-  const signInWithGoogle = async () => {
-    await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo: `${window.location.origin}/auth/callback` }
-    })
-  }
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    setError('')
+    setMessage('')
 
-  const signInWithApple = async () => {
-    await supabase.auth.signInWithOAuth({
-      provider: 'apple',
-      options: { redirectTo: `${window.location.origin}/auth/callback` }
-    })
+    if (isSignUp) {
+      const { error } = await supabase.auth.signUp({ email, password })
+      if (error) setError(error.message)
+      else setMessage('Vérifie ton email pour confirmer ton compte !')
+    } else {
+      const { error } = await supabase.auth.signInWithPassword({ email, password })
+      if (error) setError(error.message)
+      else router.push(redirect)
+    }
+    setLoading(false)
   }
 
   return (
     <div className="min-h-screen bg-white flex flex-col items-center justify-center px-6">
       <div className="w-full max-w-sm">
-
-        {/* Logo */}
         <div className="text-center mb-10">
           <div className="text-4xl mb-3">🔴</div>
           <h1 className="text-2xl font-semibold text-gray-900">MyOffMode</h1>
-          <p className="text-gray-500 text-sm mt-2">
-            Activate your OFF Mode. The home handles itself.
-          </p>
+          <p className="text-gray-500 text-sm mt-2">Activate your OFF Mode. The home handles itself.</p>
         </div>
 
-        {/* Boutons connexion */}
-        <div className="space-y-3">
+        <form onSubmit={handleSubmit} className="space-y-3">
+          <input
+            type="email"
+            placeholder="Email"
+            value={email}
+            onChange={e => setEmail(e.target.value)}
+            required
+            className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-sm outline-none focus:border-gray-400"
+          />
+          <input
+            type="password"
+            placeholder="Mot de passe"
+            value={password}
+            onChange={e => setPassword(e.target.value)}
+            required
+            className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-sm outline-none focus:border-gray-400"
+          />
+          {(error || urlError) && <p className="text-red-500 text-sm bg-red-50 rounded-xl px-3 py-2">{error || urlError}</p>}
+          {message && <p className="text-green-600 text-sm">{message}</p>}
           <button
-            onClick={signInWithGoogle}
-            className="w-full flex items-center justify-center gap-3 border border-gray-200 rounded-xl px-4 py-3.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+            type="submit"
+            disabled={loading}
+            className="w-full bg-black text-white rounded-xl px-4 py-3.5 text-sm font-medium hover:bg-gray-900 transition-colors disabled:opacity-50"
           >
-            <svg width="18" height="18" viewBox="0 0 18 18">
-              <path fill="#4285F4" d="M16.51 8H8.98v3h4.3c-.18 1-.74 1.48-1.6 2.04v2.01h2.6a7.8 7.8 0 0 0 2.38-5.88c0-.57-.05-.66-.15-1.18z"/>
-              <path fill="#34A853" d="M8.98 17c2.16 0 3.97-.72 5.3-1.94l-2.6-2.01c-.72.48-1.63.76-2.7.76-2.07 0-3.82-1.4-4.45-3.28H1.86v2.07A8 8 0 0 0 8.98 17z"/>
-              <path fill="#FBBC05" d="M4.53 10.53a4.8 4.8 0 0 1 0-3.06V5.4H1.86a8 8 0 0 0 0 7.2l2.67-2.07z"/>
-              <path fill="#EA4335" d="M8.98 4.19c1.17 0 2.23.4 3.06 1.2l2.3-2.3A8 8 0 0 0 1.86 5.4L4.53 7.47c.63-1.88 2.38-3.28 4.45-3.28z"/>
-            </svg>
-            Continuer avec Google
+            {loading ? '...' : isSignUp ? 'Créer mon compte' : 'Se connecter'}
           </button>
+        </form>
 
-          <button
-            onClick={signInWithApple}
-            className="w-full flex items-center justify-center gap-3 bg-black rounded-xl px-4 py-3.5 text-sm font-medium text-white hover:bg-gray-900 transition-colors"
-          >
-            <svg width="17" height="17" viewBox="0 0 17 17" fill="white">
-              <path d="M8.52 3.59c.74 0 1.67-.5 2.22-1.16.5-.6.86-1.44.86-2.28 0-.11-.01-.22-.03-.31-.82.03-1.8.55-2.39 1.24-.47.53-.89 1.36-.89 2.21 0 .12.02.24.03.28.05.01.13.02.2.02zM5.9 16.5c1.02 0 1.47-.68 2.73-.68 1.28 0 1.56.67 2.69.67 1.11 0 1.85-.96 2.56-1.9.79-1.07 1.12-2.12 1.14-2.17-.07-.02-2.22-.9-2.22-3.37 0-2.12 1.63-3.1 1.72-3.16-.99-1.42-2.5-1.46-2.93-1.46-1.24 0-2.25.74-2.88.74-.67 0-1.58-.7-2.65-.7C3.54 4.37 1.5 5.98 1.5 9.1c0 1.95.76 4.02 1.69 5.35.8 1.13 1.5 2.05 2.71 2.05z"/>
-            </svg>
-            Continuer avec Apple
+        {!isSignUp && (
+          <div className="text-center mt-3">
+            <Link href="/auth/reset-password" className="text-xs text-gray-400 hover:text-gray-600 underline">
+              Mot de passe oublié ?
+            </Link>
+          </div>
+        )}
+
+        <p className="text-center text-sm text-gray-500 mt-4">
+          {isSignUp ? 'Déjà un compte ?' : 'Pas encore de compte ?'}{' '}
+          <button onClick={() => setIsSignUp(!isSignUp)} className="underline font-medium text-gray-900">
+            {isSignUp ? 'Se connecter' : 'Créer un compte'}
           </button>
-        </div>
-
-        <p className="text-center text-xs text-gray-400 mt-6">
-          En continuant, tu acceptes nos{' '}
-          <a href="/terms" className="underline">Conditions d'utilisation</a>
         </p>
       </div>
     </div>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-gray-300 border-t-gray-900 rounded-full animate-spin" />
+      </div>
+    }>
+      <LoginForm />
+    </Suspense>
   )
 }

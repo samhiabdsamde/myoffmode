@@ -1,9 +1,15 @@
 import type { Metadata, Viewport } from 'next'
-import { Inter } from 'next/font/google'
+import { Inter, Playfair_Display } from 'next/font/google'
 import './globals.css'
 import CookieBanner from '@/components/CookieBanner'
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
+const playfair = Playfair_Display({
+  subsets: ['latin'],
+  variable: '--font-playfair',
+  style: ['normal', 'italic'],
+  weight: ['400', '700', '900'],
+})
 
 const BASE_URL = 'https://myoffmode.com'
 
@@ -16,10 +22,10 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL(BASE_URL),
   title: {
-    default: 'MyOffMode — Activate your OFF Mode. The home handles itself.',
+    default: 'MyOffMode — La charge mentale posée. Toi, tu souffles.',
     template: '%s | MyOffMode',
   },
-  description: "Encode tes routines familiales en 10 minutes. L'IA explique ta façon de faire à ton partenaire. La maison tourne même quand tu décroches. Anti charge mentale pour mamans.",
+  description: "MyOffMode est l'espace où tu déposes ta charge mentale une fois pour toutes. L'IA transmet ton expertise de maman à ton partenaire. Tu décroches vraiment. Sans culpabilité.",
   keywords: [
     'charge mentale maman', 'déléguer tâches ménagères', 'app famille organisation',
     'routine familiale', 'partenaire organisation maison', 'off mode maman',
@@ -37,8 +43,8 @@ export const metadata: Metadata = {
     alternateLocale: 'en_US',
     url: BASE_URL,
     siteName: 'MyOffMode',
-    title: 'MyOffMode — Activate your OFF Mode. The home handles itself.',
-    description: "Encode tes routines familiales. L'IA gère à ta place. Tu décroches vraiment.",
+    title: 'MyOffMode — La charge mentale posée. Toi, tu souffles.',
+    description: "La première app qui donne aux mamans la permission de vraiment déconnecter. Pose ta charge mentale. L'IA s'occupe du reste.",
     images: [
       {
         url: `${BASE_URL}/og-image.jpg`,
@@ -151,7 +157,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       </head>
-      <body className={`${inter.variable} font-sans antialiased`}>
+      <body className={`${inter.variable} ${playfair.variable} font-sans antialiased`}>
         {children}
         <CookieBanner />
       </body>

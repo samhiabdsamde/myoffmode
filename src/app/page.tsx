@@ -3,9 +3,21 @@ import type { Metadata } from 'next'
 import MobileNav from '@/components/MobileNav'
 
 export const metadata: Metadata = {
-  title: 'MyOffMode — La charge mentale posée. Toi, tu souffles.',
-  description: "MyOffMode est l'espace où tu déposes ta charge mentale une fois pour toutes. L'IA transmet ton expertise de maman à ton partenaire. Tu décroches vraiment. Sans culpabilité.",
+  // Specific homepage override — more keyword-rich than the layout default
+  title: 'MyOffMode · App Charge Mentale Maman — Souffle Enfin',
+  description:
+    "MyOffMode est l'application anti-charge mentale pour mamans débordées. " +
+    "Dépose tes routines familiales en 10 minutes, ton partenaire gère grâce à l'IA, " +
+    "et toi tu décroches vraiment. Épuisement maternel, invisible labor — enfin une vraie solution.",
   alternates: { canonical: 'https://myoffmode.com' },
+  openGraph: {
+    title: 'MyOffMode · App Charge Mentale Maman — Souffle Enfin',
+    description:
+      "L'app qui libère les mamans de la charge mentale invisible. " +
+      "Encode tes routines, ton partenaire gère grâce à l'IA. " +
+      "Épuisement maternel — enfin une solution concrète.",
+    url: 'https://myoffmode.com',
+  },
 }
 
 // ── Design tokens ──────────────────────────────────────────────────
@@ -557,6 +569,58 @@ export default function HomePage() {
               </div>
             </details>
           ))}
+        </div>
+      </section>
+
+      {/* ── SEMANTIC SEO SECTION ──────────────────────────────── */}
+      {/* Visible, honest content that serves users AND signals topic cluster to Google */}
+      <section className="py-16 px-6">
+        <div className="max-w-3xl mx-auto rounded-2xl p-8 border" style={{ background: CardBG, borderColor: Border }}>
+          <h2 className="font-serif text-2xl font-bold mb-6" style={{ color: TextPri }}>
+            MyOffMode · L&apos;app anti-charge mentale pour mamans
+          </h2>
+          <div className="grid sm:grid-cols-2 gap-6 text-sm leading-relaxed" style={{ color: TextSec }}>
+            <div>
+              <h3 className="font-semibold mb-2" style={{ color: 'rgba(245,238,232,0.75)' }}>
+                La charge mentale, c&apos;est quoi ?
+              </h3>
+              <p>
+                La charge mentale désigne le poids cognitif invisible que portent
+                majoritairement les mères : anticiper, planifier, organiser, se souvenir de tout
+                pour toute la famille — même pendant les moments de repos.
+                MyOffMode est la première app conçue pour <strong className="font-semibold" style={{ color: 'rgba(245,238,232,0.75)' }}>externaliser cette charge</strong>.
+              </p>
+            </div>
+            <div>
+              <h3 className="font-semibold mb-2" style={{ color: 'rgba(245,238,232,0.75)' }}>
+                Pour quelles mamans ?
+              </h3>
+              <p>
+                MyOffMode est conçu pour les <strong className="font-semibold" style={{ color: 'rgba(245,238,232,0.75)' }}>mamans débordées</strong> qui
+                veulent se reposer sans culpabilité, les familles qui cherchent à mieux
+                répartir la charge domestique, et les couples qui veulent sortir du schéma
+                &ldquo;tout sur les épaules de maman&rdquo;.
+              </p>
+            </div>
+          </div>
+          <div className="mt-6 pt-6 border-t flex flex-wrap gap-3" style={{ borderColor: Border }}>
+            {[
+              'Charge mentale maman',
+              'Épuisement maternel',
+              'Burn-out maternel',
+              'Invisible labor',
+              'Organisation familiale',
+              'Off Mode maman',
+              'Routines famille',
+              'Déléguer partenaire',
+            ].map(tag => (
+              <span key={tag}
+                className="px-3 py-1 rounded-full text-xs border"
+                style={{ background: CSofter, borderColor: CBorder, color: TextSec }}>
+                {tag}
+              </span>
+            ))}
+          </div>
         </div>
       </section>
 

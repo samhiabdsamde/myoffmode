@@ -2,9 +2,24 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 
 export const metadata: Metadata = {
-  title: 'Blog — Charge mentale, organisation familiale & bien-être maman',
-  description: 'Conseils pratiques pour réduire la charge mentale, mieux déléguer et retrouver du temps pour soi. Articles écrits par des mamans, pour des mamans.',
+  title: 'Blog Charge Mentale Maman — Conseils, témoignages & solutions',
+  description:
+    'Articles sur la charge mentale des mamans, l\'épuisement maternel, l\'invisible labor et comment vraiment déléguer. ' +
+    'Conseils concrets pour les mamans débordées. Par MyOffMode.',
+  keywords: [
+    'blog charge mentale maman',
+    'articles épuisement maternel',
+    'conseils mamans débordées',
+    'charge mentale invisible labor',
+    'burn out maternel conseils',
+    'déléguer routines familiales',
+  ],
   alternates: { canonical: 'https://myoffmode.com/blog' },
+  openGraph: {
+    title: 'Blog Charge Mentale Maman · MyOffMode',
+    description: 'Articles concrets sur la charge mentale, l\'épuisement maternel et comment vraiment souffler.',
+    url: 'https://myoffmode.com/blog',
+  },
 }
 
 const posts = [

@@ -3,12 +3,25 @@ import { useState, useRef, useEffect } from 'react'
 
 interface Message { role: 'user' | 'assistant'; content: string }
 
+const C = '#C4737A'
+const CSoft = 'rgba(196,115,122,0.12)'
+const CBorder = 'rgba(196,115,122,0.25)'
+const Border = 'rgba(245,238,232,0.07)'
+const TextPri = '#F5EEE8'
+const TextSec = 'rgba(245,238,232,0.55)'
+const TextTer = 'rgba(245,238,232,0.25)'
+
 export default function ChatModal({ familyId, onClose }: { familyId: string; onClose: () => void }) {
   const [messages, setMessages] = useState<Message[]>([
-    { role: 'assistant', content: "Bonjour ! Je connais les habitudes de ta famille. Pose-moi n'importe quelle question — comment préparer le repas, où sont les médicaments, la routine du bain... 🔴" }
+    // BUG FIX #5 — Suppression emoji 🔴, message d'accueil plus chaleureux
+    {
+      role: 'assistant',
+      content: "Bonjour ✦ Je connais les habitudes de ta famille. Pose-moi n'importe quelle question — la routine du bain, où sont les médicaments, ce qu'on mange ce soir..."
+    }
   ])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
   const bottomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -19,6 +32,7 @@ export default function ChatModal({ familyId, onClose }: { familyId: string; onC
     if (!input.trim() || loading) return
     const userMsg = input.trim()
     setInput('')
+    setError('')
     setMessages(prev => [...prev, { role: 'user', content: userMsg }])
     setLoading(true)
 
@@ -29,76 +43,110 @@ export default function ChatModal({ familyId, onClose }: { familyId: string; onC
         body: JSON.stringify({
           message: userMsg,
           familyId,
-          history: messages.slice(-6) // garde les 6 derniers messages en contexte
+          history: messages.slice(-6)
         })
       })
-      const { reply } = await res.json()
-      setMessages(prev => [...prev, { role: 'assistant', content: reply }])
+
+      if (res.status === 401) {
+        setError('Tu dois être connecté pour utiliser le chat.')
+        setLoading(false)
+        return
+      }
+      if (res.status === 403) {
+        setError('Accès refusé à cette famille.')
+        setLoading(false)
+        return
+      }
+
+      const { reply, error: apiError } = await res.json()
+      if (apiError) {
+        setMessages(prev => [...prev, { role: 'assistant', content: "Désolé, une erreur s'est produite. Réessaie." }])
+      } else {
+        setMessages(prev => [...prev, { role: 'assistant', content: reply }])
+      }
     } catch {
-      setMessages(prev => [...prev, { role: 'assistant', content: "Désolé, une erreur s'est produite. Réessaie." }])
+      setMessages(prev => [...prev, { role: 'assistant', content: "Connexion impossible. Vérifie ta connexion internet." }])
     }
     setLoading(false)
   }
 
   const suggestions = [
-    "Comment elle prépare le petit-déj ?",
     "La routine du bain des enfants ?",
+    "Comment elle prépare le petit-déj ?",
     "Où sont les médicaments ?",
     "Qu'est-ce qu'on mange ce soir ?"
   ]
 
   return (
-    <div className="fixed inset-0 bg-black/40 z-50 flex items-end">
-      <div className="bg-white w-full rounded-t-3xl max-h-[85vh] flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-end" style={{ background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(4px)' }}>
+      <div className="w-full rounded-t-3xl max-h-[85vh] flex flex-col overflow-hidden"
+        style={{ background: '#1A0C14', border: `1px solid ${CBorder}`, borderBottom: 'none' }}>
 
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-4 border-b border-gray-100">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-rose-100 rounded-full flex items-center justify-center text-sm">🤖</div>
+        <div className="flex items-center justify-between px-5 py-4 border-b flex-shrink-0" style={{ borderColor: Border }}>
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: CSoft }}>
+              <span style={{ color: C }}>🤖</span>
+            </div>
             <div>
-              <p className="text-sm font-semibold text-gray-900">Assistant MyOffMode</p>
-              <p className="text-xs text-gray-500">Connaît les habitudes de ta famille</p>
+              <p className="text-sm font-semibold" style={{ color: TextPri }}>Assistant MyOffMode</p>
+              <p className="text-xs" style={{ color: TextTer }}>Connaît les habitudes de ta famille</p>
             </div>
           </div>
-          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600">✕</button>
+          <button
+            onClick={onClose}
+            className="w-8 h-8 flex items-center justify-center rounded-full transition-colors hover:opacity-70"
+            style={{ color: TextTer }}>
+            ✕
+          </button>
         </div>
 
         {/* Messages */}
         <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
           {messages.map((msg, i) => (
             <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-              <div className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
-                msg.role === 'user'
-                  ? 'bg-rose-500 text-white rounded-br-md'
-                  : 'bg-gray-100 text-gray-800 rounded-bl-md'
-              }`}>
+              <div className={`max-w-[82%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed`}
+                style={msg.role === 'user'
+                  ? { background: C, color: 'white', borderBottomRightRadius: '4px' }
+                  : { background: CSoft, color: TextPri, borderBottomLeftRadius: '4px', border: `1px solid ${CBorder}` }
+                }>
                 {msg.content}
               </div>
             </div>
           ))}
+
           {loading && (
             <div className="flex justify-start">
-              <div className="bg-gray-100 rounded-2xl rounded-bl-md px-4 py-3">
-                <div className="flex gap-1">
-                  <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay:'0ms'}} />
-                  <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay:'150ms'}} />
-                  <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay:'300ms'}} />
+              <div className="rounded-2xl px-4 py-3" style={{ background: CSoft, border: `1px solid ${CBorder}` }}>
+                <div className="flex gap-1.5">
+                  {[0, 150, 300].map(delay => (
+                    <span key={delay}
+                      className="w-2 h-2 rounded-full animate-bounce"
+                      style={{ background: C, animationDelay: `${delay}ms` }} />
+                  ))}
                 </div>
               </div>
             </div>
           )}
+
+          {error && (
+            <div className="text-center text-xs py-2" style={{ color: 'rgba(196,115,122,0.7)' }}>
+              ⚠️ {error}
+            </div>
+          )}
+
           <div ref={bottomRef} />
         </div>
 
         {/* Suggestions rapides */}
         {messages.length <= 1 && (
-          <div className="px-4 pb-2 flex gap-2 overflow-x-auto">
+          <div className="px-4 pb-2 flex gap-2 overflow-x-auto flex-shrink-0">
             {suggestions.map(s => (
               <button
                 key={s}
-                onClick={() => { setInput(s); }}
-                className="flex-shrink-0 text-xs border border-gray-200 rounded-full px-3 py-1.5 text-gray-600 hover:bg-gray-50"
-              >
+                onClick={() => setInput(s)}
+                className="flex-shrink-0 text-xs rounded-full px-3 py-1.5 border transition-colors hover:opacity-80"
+                style={{ borderColor: CBorder, color: TextSec, background: CSoft }}>
                 {s}
               </button>
             ))}
@@ -106,23 +154,29 @@ export default function ChatModal({ familyId, onClose }: { familyId: string; onC
         )}
 
         {/* Input */}
-        <div className="px-4 pb-6 pt-2 flex gap-2 border-t border-gray-100">
+        <div className="px-4 pb-6 pt-2 flex gap-2 border-t flex-shrink-0" style={{ borderColor: Border }}>
           <input
             type="text"
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && send()}
             placeholder="Pose ta question..."
-            className="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-rose-300"
+            className="flex-1 rounded-xl px-4 py-2.5 text-sm outline-none transition-all"
+            style={{
+              background: 'rgba(245,238,232,0.05)',
+              border: `1px solid ${Border}`,
+              color: TextPri,
+            }}
           />
           <button
             onClick={send}
             disabled={!input.trim() || loading}
-            className="w-10 h-10 bg-rose-500 rounded-xl flex items-center justify-center text-white disabled:opacity-40 hover:bg-rose-600 transition-colors"
-          >
+            className="w-10 h-10 rounded-xl flex items-center justify-center text-white transition-all disabled:opacity-40 hover:opacity-90"
+            style={{ background: C }}>
             ↑
           </button>
         </div>
+
       </div>
     </div>
   )

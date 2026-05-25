@@ -25,10 +25,12 @@ export async function PATCH(req: NextRequest) {
   if (!user) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
 
   const { ids } = await req.json()
-  const query = supabase.from('notifications').update({ is_read: true }).eq('user_id', user.id)
-  if (ids?.length) query.in('id', ids)
-
-  await query
+  // BUG FIX — .in() retourne un nouveau builder, doit être chaîné correctement
+  if (ids?.length) {
+    await supabase.from('notifications').update({ is_read: true }).eq('user_id', user.id).in('id', ids)
+  } else {
+    await supabase.from('notifications').update({ is_read: true }).eq('user_id', user.id)
+  }
   return NextResponse.json({ success: true })
 }
 

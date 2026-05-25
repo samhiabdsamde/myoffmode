@@ -1,19 +1,39 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@supabase/supabase-js'
+import { createServerSupabase } from '@/lib/supabase-server'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
 export async function POST(req: NextRequest) {
   try {
+    // BUG FIX #3 — Vérification auth + appartenance à la famille
+    const serverSupabase = createServerSupabase()
+    const { data: { user } } = await serverSupabase.auth.getUser()
+    if (!user) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
+
     const { message, familyId, history = [] } = await req.json()
-
     if (!familyId) return NextResponse.json({ error: 'familyId requis' }, { status: 400 })
+    if (!message?.trim()) return NextResponse.json({ error: 'Message vide' }, { status: 400 })
 
-    // Récupérer les données de la famille depuis Supabase
+    // Vérifier que l'utilisateur appartient bien à cette famille
+    const { data: profile } = await serverSupabase
+      .from('profiles')
+      .select('family_id')
+      .eq('id', user.id)
+      .single()
+
+    if (!profile?.family_id || profile.family_id !== familyId) {
+      return NextResponse.json({ error: 'Accès refusé' }, { status: 403 })
+    }
+
+    // Limiter l'historique pour éviter les abus (max 10 échanges)
+    const safeHistory = Array.isArray(history) ? history.slice(-10) : []
+
+    // Récupérer les données de la famille
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     )
 
     const [
@@ -44,9 +64,9 @@ Si une information n'est pas dans les données de la famille, dis-le clairement 
 
     // Construire l'historique de conversation
     const messages = [
-      ...history.map((h: { role: string; content: string }) => ({
+      ...safeHistory.map((h: { role: string; content: string }) => ({
         role: h.role as 'user' | 'assistant',
-        content: h.content
+        content: String(h.content).slice(0, 1000), // limiter taille de chaque message
       })),
       { role: 'user' as const, content: message }
     ]
